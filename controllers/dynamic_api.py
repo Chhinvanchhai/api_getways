@@ -4,7 +4,7 @@ from odoo.http import request
 from .base_api import BaseApi
 from .decorators import require_auth
 from .helpers import get_request_data
-import base64
+import base64, secrets
 
 
 class DynamicModelApi(BaseApi):
@@ -100,7 +100,27 @@ class DynamicModelApi(BaseApi):
             total = Model.search_count(domain)
             records = Model.search(domain, offset=offset, limit=limit)
             data = records.read(fields)
-            
+            attachments_param = request.params.get("attachments")
+            # -------------------------------------------------
+            # 6️⃣ Convert binary & attachments to URLs
+            # -------------------------------------------------
+            if attachments_param == 'true' or attachments_param == 'True':
+                for record, record_data in zip(records, data):
+                    for field in list(record_data.keys()):
+                        if field not in record._fields:
+                            continue
+                        
+                        field_def = record._fields[field]
+                        if field_def.type == "binary" and record_data.get(field):
+                            record_data[field] = self._binary_to_url(
+                                model, record.id, field
+                            )
+                        elif field_def.type == "many2many" and field_def.comodel_name == "ir.attachment":
+                            record_data[field] = [
+                                self._attachment_to_dict(att)
+                                for att in record[field]
+                            ]
+                
             expand = request.params.get("expand")
             if  expand == 'true' or expand == 'True':
                 data = self._expand_relations(records, data)
@@ -212,7 +232,7 @@ class DynamicModelApi(BaseApi):
         type="http",
         auth="none",
         methods=["POST"],
-        csrf=False
+        csrf=False,
     )
     @require_auth()
     def add_attachment(self, model, record_id, **kwargs):
@@ -232,7 +252,10 @@ class DynamicModelApi(BaseApi):
             if not req.content_type or "multipart/form-data" not in req.content_type:
                 return self.response_error("multipart/form-data required", 400)
 
-            # Collect all uploaded files, grouped by field name
+            # Optional GET param to make attachments public
+            make_public = request.params.get("public", "false").lower() == "true"
+
+            # Collect uploaded files
             files_by_field = {}
             for key in req.files:
                 files_by_field[key] = req.files.getlist(key)
@@ -243,7 +266,6 @@ class DynamicModelApi(BaseApi):
             Attachment = request.env["ir.attachment"].sudo()
             result = {}
 
-            # Iterate over each field
             for field_name, files in files_by_field.items():
                 field = record._fields.get(field_name)
                 if not field:
@@ -257,27 +279,36 @@ class DynamicModelApi(BaseApi):
                     result[field_name] = {
                         "type": "binary",
                         "filename": file.filename,
-                        "message": "Binary field updated"
+                        "message": "Binary field updated",
                     }
 
                 # Many2many to ir.attachment
                 elif field.type == "many2many" and field.comodel_name == "ir.attachment":
-                    attachment_ids = []
+                    attachment_urls = []
                     for file in files:
+                        # Generate random access token for secure access
+                        token = secrets.token_urlsafe(32)
                         attachment = Attachment.create({
                             "name": file.filename,
                             "datas": base64.b64encode(file.read()),
                             "res_model": model,
                             "res_id": record.id,
                             "mimetype": file.mimetype,
+                            "public": make_public,
+                            "access_token": token,  # Odoo built-in token field
                         })
-                        attachment_ids.append(attachment.id)
+                        attachment.write({"access_token": token})
+                        attachment_urls.append({
+                            "id": attachment.id,
+                            "name": attachment.name,
+                            "url": f"{request.httprequest.host_url}web/content/{attachment.id}?download=true&access_token={token}"
+                        })
 
-                    record.write({field_name: [(4, att_id) for att_id in attachment_ids]})
+                    record.write({field_name: [(4, att["id"]) for att in attachment_urls]})
                     result[field_name] = {
                         "type": "many2many",
-                        "attachments": attachment_ids,
-                        "message": "Attachments added"
+                        "attachments": attachment_urls,
+                        "message": "Attachments added",
                     }
                 else:
                     result[field_name] = {"error": "Unsupported field type"}

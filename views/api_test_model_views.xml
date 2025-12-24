@@ -23,6 +23,7 @@
                         <field name="mode"/>
                         <field name="image_1920" widget="image"/>
                         <field name="attachment_ids" widget="many2many_binary" options="{'image': 'image_1920'}"/>
+                        <field name="doc_ids" widget="many2many_binary" options="{'image': 'image_1920'}"/>
                     </group>
                 </sheet>
             </form>

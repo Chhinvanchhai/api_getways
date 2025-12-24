@@ -21,7 +21,9 @@
     }
   },
   "security": [
-    { "BearerAuth": [] }
+    {
+      "BearerAuth": []
+    }
   ],
   "paths": {
     "/api/v1/auth/login": {
@@ -34,10 +36,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "login": { "type": "string", "example": "admin@example.com" },
-                  "password": { "type": "string", "example": "admin" }
+                  "login": {
+                    "type": "string",
+                    "example": "admin@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "admin"
+                  }
                 },
-                "required": ["login", "password"]
+                "required": [
+                  "login",
+                  "password"
+                ]
               }
             }
           }
@@ -50,13 +61,23 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "integer", "example": 200 },
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
                     "result": {
                       "type": "object",
                       "properties": {
-                        "access_token": { "type": "string" },
-                        "refresh_token": { "type": "string" },
-                        "expires_in": { "type": "integer", "description": "Seconds until token expires" }
+                        "access_token": {
+                          "type": "string"
+                        },
+                        "refresh_token": {
+                          "type": "string"
+                        },
+                        "expires_in": {
+                          "type": "integer",
+                          "description": "Seconds until token expires"
+                        }
                       }
                     }
                   }
@@ -64,9 +85,15 @@
               }
             }
           },
-          "400": { "description": "Missing login or password" },
-          "401": { "description": "Invalid credentials" },
-          "500": { "description": "Server error" }
+          "400": {
+            "description": "Missing login or password"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
@@ -80,9 +107,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "refresh_token": { "type": "string" }
+                  "refresh_token": {
+                    "type": "string"
+                  }
                 },
-                "required": ["refresh_token"]
+                "required": [
+                  "refresh_token"
+                ]
               }
             }
           }
@@ -95,12 +126,19 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "integer", "example": 200 },
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
                     "result": {
                       "type": "object",
                       "properties": {
-                        "access_token": { "type": "string" },
-                        "expires_in": { "type": "integer" }
+                        "access_token": {
+                          "type": "string"
+                        },
+                        "expires_in": {
+                          "type": "integer"
+                        }
                       }
                     }
                   }
@@ -108,9 +146,15 @@
               }
             }
           },
-          "400": { "description": "Invalid payload" },
-          "401": { "description": "Invalid refresh token" },
-          "500": { "description": "Server error" }
+          "400": {
+            "description": "Invalid payload"
+          },
+          "401": {
+            "description": "Invalid refresh token"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
@@ -123,97 +167,114 @@
             "name": "model",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Odoo model name (e.g., res.users, res.partner)"
           },
-      
           {
             "name": "page",
             "in": "query",
-            "schema": { "type": "integer", "default": 1, "minimum": 1 },
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
             "description": "Page number"
           },
-      
           {
             "name": "limit",
             "in": "query",
-            "schema": { "type": "integer", "default": 20, "maximum": 100 },
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "maximum": 100
+            },
             "description": "Number of records per page"
           },
-      
           {
             "name": "fields",
             "in": "query",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Comma-separated list of fields to return (e.g., id,name,partner_id,company_id)"
           },
-      
           {
             "name": "expand",
             "in": "query",
             "schema": {
               "oneOf": [
-                { "type": "boolean" },
-                { "type": "string" }
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "description": "Expand relational fields. Use `true` to expand all relational fields included in `fields`, or specify relations explicitly (e.g., partner_id,company_id)."
           },
-      
           {
             "name": "partner_id",
             "in": "query",
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "style": "form",
             "explode": false,
             "description": "Comma-separated list of sub-fields for partner_id when expanded (e.g., id,name,email,phone,mobile)"
-          }
-      ,
-      {
-        "name": "company_id",
-        "in": "query",
-        "schema": { "type": "string" },
-        "style": "form",
-        "explode": false,
-        "description": "Comma-separated list of sub-fields for company_id when expanded (e.g., id,name)"
-      },
+          },
+          {
+            "name": "company_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "style": "form",
+            "explode": false,
+            "description": "Comma-separated list of sub-fields for company_id when expanded (e.g., id,name)"
+          },
           {
             "name": "domain_field",
             "in": "query",
             "schema": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             },
             "style": "form",
             "explode": true,
             "description": "Field names for domain filtering"
           },
-      
           {
             "name": "domain_operator",
             "in": "query",
             "schema": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             },
             "style": "form",
             "explode": true,
             "description": "Operators for domain filtering (e.g., '=', 'ilike', 'in')"
           },
-      
           {
             "name": "domain_value",
             "in": "query",
             "schema": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             },
             "style": "form",
             "explode": true,
             "description": "Values for domain filtering"
           }
         ],
-      
         "responses": {
           "200": {
             "description": "List of records",
@@ -222,11 +283,22 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "model": { "type": "string" },
-                    "status": { "type": "integer", "example": 200 },
-                    "page": { "type": "integer" },
-                    "limit": { "type": "integer" },
-                    "total": { "type": "integer" },
+                    "model": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
                     "result": {
                       "type": "array",
                       "items": {
@@ -239,30 +311,38 @@
               }
             }
           },
-      
           "403": {
             "description": "Forbidden – insufficient permissions"
           },
-      
           "404": {
             "description": "Model not found"
           },
-      
           "500": {
             "description": "Internal server error"
           }
         }
-      }
-      ,
+      },
       "post": {
         "summary": "Create a record in a model",
         "parameters": [
-          { "name": "model", "in": "path", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "model",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": { "schema": { "type": "object", "description": "JSON object of field values" } }
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "JSON object of field values"
+              }
+            }
           }
         },
         "responses": {
@@ -272,15 +352,30 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "id": { "type": "integer" }, "status": { "type": "integer" } }
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "status": {
+                      "type": "integer"
+                    }
+                  }
                 }
               }
             }
           },
-          "400": { "description": "Invalid or missing payload" },
-          "404": { "description": "Model not found" },
-          "403": { "description": "Forbidden" },
-          "500": { "description": "Server error" }
+          "400": {
+            "description": "Invalid or missing payload"
+          },
+          "404": {
+            "description": "Model not found"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     },
@@ -288,13 +383,32 @@
       "put": {
         "summary": "Update a record",
         "parameters": [
-          { "name": "model", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "record_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "model",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": { "schema": { "type": "object", "description": "Fields to update" } }
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Fields to update"
+              }
+            }
           }
         },
         "responses": {
@@ -305,34 +419,70 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "integer" },
-                    "message": { "type": "string" },
-                    "status": { "type": "integer" }
+                    "id": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "integer"
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Invalid payload" },
-          "404": { "description": "Model or record not found" },
-          "403": { "description": "Forbidden" },
-          "500": { "description": "Server error" }
+          "400": {
+            "description": "Invalid payload"
+          },
+          "404": {
+            "description": "Model or record not found"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       },
       "patch": {
         "summary": "Alias for PUT (update record)",
         "parameters": [
-          { "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/parameters/0" },
-          { "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/parameters/1" }
+          {
+            "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/parameters/0"
+          },
+          {
+            "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/parameters/1"
+          }
         ],
-        "requestBody": { "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/requestBody" },
-        "responses": { "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/responses" }
+        "requestBody": {
+          "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/requestBody"
+        },
+        "responses": {
+          "$ref": "#/paths//api/v1/models/{model}/{record_id}/put/responses"
+        }
       },
       "delete": {
         "summary": "Delete a record",
         "parameters": [
-          { "name": "model", "in": "path", "required": true, "schema": { "type": "string" } },
-          { "name": "record_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+          {
+            "name": "model",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -341,14 +491,140 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "id": { "type": "integer" }, "deleted": { "type": "boolean" } }
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  }
                 }
               }
             }
           },
-          "404": { "description": "Model or record not found" },
-          "403": { "description": "Forbidden" },
-          "500": { "description": "Server error" }
+          "404": {
+            "description": "Model or record not found"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/v1/models/{model}/{record_id}/attachment": {
+      "post": {
+        "summary": "Add attachment to a record",
+        "tags": [
+          "Attachments"
+        ],
+        "parameters": [
+          {
+            "name": "model",
+            "in": "path",
+            "required": true,
+            "description": "Odoo model name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the record",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "public",
+            "in": "query",
+            "required": false,
+            "description": "Mark attachment as public",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "doc_ids": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload, to parameter name should match the target field "
+                  },
+                  "attachment_ids": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload, to parameter name should match the target field "
+                  },
+                  "image_1920": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload, to parameter name should match the target field "
+                  }
+        
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attachment added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "public": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Record or model not found"
+          }
         }
       }
     }

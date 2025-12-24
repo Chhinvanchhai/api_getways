@@ -121,7 +121,6 @@ class BaseApi(http.Controller):
     
     def _expand_relations(self, records, data, depth=0, max_depth=3):
         params = request.params
-
         expand = params.get("expand", "false").lower() == "true"
         if not expand or not records or not data or depth >= max_depth:
             return data
@@ -132,29 +131,34 @@ class BaseApi(http.Controller):
                     continue
 
                 field = rec._fields[field_name]
-                if field.type not in ("many2one", "many2many", "one2many"):
-                    continue
-
                 value = rec[field_name]
+
+                # ───────── Handle empty / None values ─────────
                 if not value:
                     row[field_name] = None if field.type == "many2one" else []
                     continue
 
-                # ─────────────────────────────────────────────
-                # fields for this level
-                # partner_id=id,name,create_uid
-                # ─────────────────────────────────────────────
+                # ───────── Binary fields → URL ─────────
+                if field.type == "binary":
+                    row[field_name] = self._binary_to_url(rec._name, rec.id, field_name)
+                    continue
+                
+                if field.type == "many2many" and field.comodel_name == "ir.attachment":
+                    continue
+
+                # ───────── Only relation fields ─────────
+                if field.type not in ("many2one", "one2many", "many2many"):
+                    continue
+
+                # ───────── Fields to expand for this relation ─────────
                 sub_fields_param = params.get(field_name)
                 sub_fields = (
                     [f.strip() for f in sub_fields_param.split(",")]
-                    if sub_fields_param
+                    if sub_fields_param and isinstance(sub_fields_param, str)
                     else ["id", "display_name"]
                 )
 
-                # ─────────────────────────────────────────────
-                # nested fields
-                # partner_id.create_uid=id,name,login
-                # ─────────────────────────────────────────────
+                # ───────── Nested params like partner_id.create_uid=id,name ─────────
                 nested_prefix = f"{field_name}."
                 nested_params = {
                     k[len(nested_prefix):]: v
@@ -164,7 +168,6 @@ class BaseApi(http.Controller):
 
                 def serialize(record, nested_params):
                     result = {}
-
                     for f in sub_fields:
                         if f not in record._fields:
                             continue
@@ -172,46 +175,38 @@ class BaseApi(http.Controller):
                         fval = record[f]
                         fdef = record._fields[f]
 
-                        # 🔁 nested many2one
-                        if (
-                            fdef.type == "many2one"
-                            and nested_params
-                            and f in nested_params
-                            and fval
-                        ):
-                            nested_fields = [
-                                x.strip()
-                                for x in nested_params[f].split(",")
-                            ]
+                        # Binary → URL
+                        if fdef.type == "binary" and fval:
+                            result[f] = self._binary_to_url(record._name, record.id, f)
+                            continue
+                        
+                        if fdef.type == "many2many" and fdef.comodel_name == "ir.attachment":
+                            continue
 
-                            nested_row = {
-                                nf: getattr(fval, nf)
-                                for nf in nested_fields
-                                if nf in fval._fields
-                            }
+                        # Nested many2one
+                        if fdef.type == "many2one" and nested_params and f in nested_params and fval:
+                            nested_field_value = nested_params.get(f)
+                            if isinstance(nested_field_value, str):
+                                nested_fields = [x.strip() for x in nested_field_value.split(",")]
+                            else:
+                                nested_fields = ["id", "display_name"]
 
-                            self._expand_relations(
-                                fval,
-                                [nested_row],
-                                depth + 1,
-                                max_depth,
-                            )
+                            nested_row = {nf: getattr(fval, nf) for nf in nested_fields if nf in fval._fields}
 
+                            self._expand_relations(fval, [nested_row], depth + 1, max_depth)
                             result[f] = nested_row
                         else:
                             result[f] = fval
-
                     return result
 
-                # ───────── apply ─────────
+                # ───────── Apply serialization ─────────
                 if field.type == "many2one":
                     row[field_name] = serialize(value, nested_params)
                 else:
-                    row[field_name] = [
-                        serialize(r, nested_params) for r in value
-                    ]
+                    row[field_name] = [serialize(r, nested_params) for r in value]
 
         return data
+
 
     def _auto_cast(self,value):
         """Convert string to bool / int / float when possible"""
@@ -284,3 +279,26 @@ class BaseApi(http.Controller):
         return domain
 
     
+    
+    def _get_base_url(self):
+        return request.httprequest.host_url.rstrip("/")
+
+    def _binary_to_url(self, model, record_id, field):
+        base_url = self._get_base_url()
+        return f"{base_url}/web/content/{model}/{record_id}/{field}"
+
+    def _attachment_to_dict(self, attachment):
+        base_url = self._get_base_url()
+        return {
+            "id": attachment.id,
+            "name": attachment.name,
+            "mimetype": attachment.mimetype,
+            "url":  f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}" if attachment.access_token else f"{base_url}/web/content/{attachment.id}?download=true",
+        }
+        
+    def _get_record_attachments(self, model, record_id):
+        attachments = request.env["ir.attachment"].sudo().search([
+            ("res_model", "=", model),
+            ("res_id", "=", record_id),
+        ])
+        return [self._attachment_to_dict(att) for att in attachments]
